@@ -1,6 +1,4 @@
-// src/pages/Dashboard.jsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   Grid,
   Typography,
@@ -9,11 +7,13 @@ import {
   Button,
   Stack,
   Snackbar,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { fetchStrategies, fetchCampaigns, fetchContent } from '../api/api';
 import StrategyForm from '../components/StrategyForm';
-import axios from 'axios';
+import API from '../api/api';
+import { AuthContext } from '../context/AuthContext';
 
 export default function Dashboard() {
   const [strategies, setStrategies] = useState([]);
@@ -21,22 +21,36 @@ export default function Dashboard() {
   const [content, setContent] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
+  const { user } = useContext(AuthContext);
+  const [loadingType, setLoadingType] = useState(null); // 'campaign' | 'content' | null
+
 
   useEffect(() => {
+    if (!user?.userId || !user?.token) return;
+
     const loadData = async () => {
-      const strat = await fetchStrategies();
-      const camp = await fetchCampaigns();
-      const cont = await fetchContent();
-      setStrategies(strat.data);
-      setCampaigns(camp.data);
-      setContent(cont.data);
+      try {
+        const [strat, camp, cont] = await Promise.all([
+          fetchStrategies(),
+          fetchCampaigns(),
+          fetchContent()
+        ]);
+
+        setStrategies(strat.data);
+        setCampaigns(camp.data);
+        setContent(cont.data);
+      } catch (error) {
+        console.error('❌ Failed to load dashboard data:', error);
+      }
     };
+
     loadData();
-  }, []);
+  }, [user]);
 
   const handleRunAgent = async (type) => {
+    setLoadingType(type);
     try {
-      await axios.post(`http://localhost:5050/api/agents/run/${type}`);
+      await API.post(`/agents/run/${type}`, { userId: user.userId });
       setSnack({
         open: true,
         message: `${type === 'campaign' ? 'Campaign Agent' : 'Content Agent'} triggered successfully!`,
@@ -48,8 +62,10 @@ export default function Dashboard() {
         message: `Failed to run ${type} agent.`,
         severity: 'error'
       });
+    } finally {
+      setLoadingType(null);
     }
-  };
+  };  
 
   const StatBox = ({ label, count }) => (
     <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
@@ -65,18 +81,32 @@ export default function Dashboard() {
       </Typography>
 
       <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <Button variant="contained" onClick={() => setFormOpen(true)}>
+        <Button variant="contained" onClick={() => setFormOpen(true)} disabled={!!loadingType}>
           ➕ Create Strategy
         </Button>
-        <Button variant="contained" color="primary" onClick={() => handleRunAgent('campaign')}>
-          ▶️ Run Campaign Agent
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleRunAgent('campaign')}
+          disabled={loadingType !== null}
+        >
+          {loadingType === 'campaign' ? <CircularProgress size={20} color="inherit" /> : '▶️ Run Campaign Agent'}
         </Button>
-        <Button variant="contained" color="secondary" onClick={() => handleRunAgent('content')}>
-          📝 Run Content Agent
+
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => handleRunAgent('content')}
+          disabled={loadingType !== null}
+        >
+          {loadingType === 'content' ? <CircularProgress size={20} color="inherit" /> : '📝 Run Content Agent'}
         </Button>
       </Stack>
 
-      <StrategyForm open={formOpen} handleClose={() => setFormOpen(false)} />
+
+
+      <StrategyForm open={formOpen} handleClose={() => setFormOpen(false)} userId={user?.userId} />
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>

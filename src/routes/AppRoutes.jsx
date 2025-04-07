@@ -1,10 +1,18 @@
+// src/routes/AppRoutes.jsx
+import React from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import Layout from '../components/Layout';
+import Dashboard from '../pages/Dashboard';
+import ChatPage from '../pages/Chat';
+import Campaigns from '../pages/Campaigns';
+import Analytics from '../pages/Analytics';
+import Marketplace from '../pages/Marketplace';
+import ContentPage from '../pages/ContentPage';
+import Login from '../pages/Login';
+import Register from '../pages/register';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ProtectedRoute from './components/ProtectedRoute'; // You'll create this next
-import { useLocation } from 'react-router-dom';
-
-function AppRoutes() {
+export default function AppRoutes() {
   const location = useLocation();
   const noLayoutRoutes = ['/chat', '/login', '/register'];
 
@@ -13,8 +21,8 @@ function AppRoutes() {
   return isNoLayout ? (
     <Routes>
       <Route path="/chat" element={<ChatPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
     </Routes>
   ) : (
     <Layout>
@@ -64,6 +72,3 @@ function AppRoutes() {
     </Layout>
   );
 }
-
-
-

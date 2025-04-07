@@ -11,7 +11,7 @@ import {
   Snackbar,
   Alert
 } from '@mui/material';
-import axios from 'axios';
+import API from '../api/api';
 
 export default function StrategyForm({ open, handleClose }) {
   const [form, setForm] = useState({
@@ -29,15 +29,15 @@ export default function StrategyForm({ open, handleClose }) {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('http://localhost:5050/api/strategy/generate', form);
-      setSnack({ open: true, message: '🎯 Strategy created and agents triggered!', severity: 'success' });
+      await API.post('/strategy/generate', form);
+      setSnack({ open: true, message: 'Strategy created and agents triggered!', severity: 'success' });
       setForm({ goal: '', industry: '', audience: '', budget: '', level: 'beginner' });
       handleClose();
     } catch (err) {
       console.error(err);
-      setSnack({ open: true, message: '❌ Failed to create strategy', severity: 'error' });
+      setSnack({ open: true, message: 'Failed to create strategy', severity: 'error' });
     }
-  };
+  };  
 
   return (
     <>

@@ -1,43 +1,43 @@
 import axios from 'axios';
 
-// Setup reusable axios instance
 const API = axios.create({
-  baseURL: 'http://localhost:5050/api'
+  baseURL: 'http://localhost:5050/api',
 });
 
-// Temporary function for getting userId
-// Replace this with actual token/user context later
-const getUserId = () => {
-  // Example placeholder logic
-  return localStorage.getItem('userId') || 'TEMP_USER_ID';
+// Attach token automatically
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Temporary userId getter (replace later with real context)
+export const getUserId = () => {
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    console.warn('⚠️ No userId found in localStorage');
+    return null;
+  }
+  return userId;
 };
 
-// Fetch strategies for the user
+// API helper functions
 export const fetchStrategies = () => {
-  const userId = getUserId();
-  return API.get(`/strategy/user/${userId}`);
-};
+    return API.get(`/strategy/user`);
+  };  
 
-// Fetch campaigns for the user
 export const fetchCampaigns = () => {
   const userId = getUserId();
-  return API.get(`/campaigns`, { params: { userId } });
+  return API.get('/campaigns', { params: { userId } });
 };
 
-// Fetch content for the user
 export const fetchContent = () => {
   const userId = getUserId();
-  return API.get(`/content`, { params: { userId } });
+  return API.get('/content', { params: { userId } });
 };
 
-// Fetch a specific campaign by ID
-export const fetchCampaignById = (id) => {
-  return API.get(`/campaigns/${id}`);
-};
+export const fetchCampaignById = (id) => API.get(`/campaigns/${id}`);
+export const fetchAgentStats = () => API.get('/agents/stats');
 
-// Fetch agent stats
-export const fetchAgentStats = () => {
-  return API.get('/agents/stats');
-};
-
+export default API;
   

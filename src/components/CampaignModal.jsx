@@ -16,48 +16,58 @@ export default function CampaignModal({ open, handleClose, campaignId }) {
 
   useEffect(() => {
     if (!campaignId) return;
+  
     const load = async () => {
       setLoading(true);
-      const res = await fetchCampaignById(campaignId);
-      setCampaign(res.data);
-      setLoading(false);
+      try {
+        const res = await fetchCampaignById(campaignId);
+        setCampaign(res.data);
+      } catch (err) {
+        console.error('❌ Failed to fetch campaign details:', err.response?.data || err.message);
+        setCampaign(null); // Ensure UI doesn't crash
+      } finally {
+        setLoading(false);
+      }
     };
+  
     load();
-  }, [campaignId]);
+  }, [campaignId]);  
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-      <DialogTitle>📦 Campaign Details</DialogTitle>
-      <DialogContent>
-        {loading ? (
-          <CircularProgress />
-        ) : (
-          <Box>
-            <Typography variant="h6">{campaign.name}</Typography>
-            <Typography variant="subtitle2" color="textSecondary">
-              Platform: {campaign.platform} | Budget: ${campaign.budget}
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="body1" gutterBottom>
-              <strong>🧠 Strategy Goal:</strong> {campaign.strategy.goal}
-            </Typography>
-            <Typography variant="body2" whiteSpace="pre-wrap">
-              {campaign.content}
-            </Typography>
-
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h6">✍️ Content Assets</Typography>
-            {campaign.ContentAssets.map((asset, i) => (
-              <Box key={i} sx={{ mb: 2 }}>
-                <Typography variant="subtitle2">• {asset.type}</Typography>
-                <Typography variant="body2" whiteSpace="pre-wrap">
-                  {asset.content}
+        <DialogTitle>📦 Campaign Details</DialogTitle>
+        <DialogContent>
+            {loading ? (
+            <CircularProgress />
+            ) : !campaign ? (
+            <Typography color="error">Failed to load campaign details.</Typography>
+            ) : (
+            <Box>
+                <Typography variant="h6">{campaign.name}</Typography>
+                <Typography variant="subtitle2" color="textSecondary">
+                Platform: {campaign.platform} | Budget: ${campaign.budget}
                 </Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
-      </DialogContent>
-    </Dialog>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="body1" gutterBottom>
+                <strong>🧠 Strategy Goal:</strong> {campaign.strategy?.goal || 'N/A'}
+                </Typography>
+                <Typography variant="body2" whiteSpace="pre-wrap">
+                {campaign.content}
+                </Typography>
+
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6">✍️ Content Assets</Typography>
+                {campaign.ContentAssets?.map((asset, i) => (
+                <Box key={i} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">• {asset.type}</Typography>
+                    <Typography variant="body2" whiteSpace="pre-wrap">
+                    {asset.content}
+                    </Typography>
+                </Box>
+                ))}
+            </Box>
+            )}
+        </DialogContent>
+        </Dialog>
   );
 }

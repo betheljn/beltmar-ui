@@ -10,29 +10,28 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import ChatbotHelpPanel from './ChatbotHelpPanel';
+import API, { getUserId } from '../api/api';
 
 export default function Chatbot() {
-  const userId = 'user123'; // Replace with real auth later
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const userId = localStorage.getItem('userId');
 
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const res = await axios.get(`http://localhost:5050/api/chat/${userId}`);
+        const res = await API.get('/chat'); // ✅ cleaner route
         setMessages(res.data);
       } catch (err) {
         console.error('Failed to load chat history:', err);
       }
     };
     loadHistory();
-    inputRef.current?.focus();
   }, []);
 
   useEffect(() => {
@@ -41,6 +40,12 @@ export default function Chatbot() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+
+    const userId = getUserId();
+    if (!userId) {
+      console.error('User ID not found in localStorage');
+      return;
+    }
 
     const userMessage = {
       sender: 'user',
@@ -53,7 +58,7 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:5050/api/chat', {
+      const res = await API.post('/chat', {
         userId,
         userMessage: input
       });
@@ -72,15 +77,17 @@ export default function Chatbot() {
     }
   };
 
+  const clearChat = async () => {
+    try {
+      await API.delete(`/chat/${userId}`);
+      setMessages([]);
+    } catch (err) {
+      console.error('Failed to clear chat:', err);
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
           Chat with Beltmar Assistant
@@ -90,15 +97,7 @@ export default function Chatbot() {
         </Button>
       </Box>
 
-      <Paper
-        sx={{
-          flexGrow: 1,
-          p: 2,
-          mb: 1,
-          overflowY: 'auto',
-          border: '1px solid #ddd',
-        }}
-      >
+      <Paper sx={{ flexGrow: 1, p: 2, mb: 1, overflowY: 'auto', border: '1px solid #ddd' }}>
         {messages.map((msg, idx) => (
           <Box key={idx} sx={{ mb: 1, textAlign: msg.sender === 'user' ? 'right' : 'left' }}>
             <Typography
@@ -109,7 +108,7 @@ export default function Chatbot() {
                 bgcolor: msg.sender === 'user' ? 'primary.light' : 'grey.200',
                 borderRadius: 2,
                 maxWidth: '85%',
-                wordBreak: 'break-word',
+                wordBreak: 'break-word'
               }}
             >
               {msg.message}
@@ -119,14 +118,12 @@ export default function Chatbot() {
             </Typography>
           </Box>
         ))}
-
         {loading && (
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
             <CircularProgress size={14} />
             <Typography variant="caption">Assistant is typing...</Typography>
           </Box>
         )}
-
         <Box ref={messagesEndRef} />
       </Paper>
 
@@ -158,16 +155,13 @@ export default function Chatbot() {
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={async () => {
-            await axios.delete(`http://localhost:5050/api/chat/${userId}`);
-            setMessages([]);
-          }}
-        >
-          Clear Chat
-        </Button>
+      <Button
+        variant="outlined"
+        color="error"
+        onClick={clearChat}
+      >
+        Clear Chat
+      </Button>
       </Box>
     </Box>
   );
