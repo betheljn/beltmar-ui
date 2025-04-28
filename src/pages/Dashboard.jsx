@@ -10,8 +10,14 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { fetchStrategies, fetchCampaigns, fetchContent } from '../api/api';
+import {
+  fetchStrategies,
+  fetchCampaigns,
+  fetchContent,
+  fetchAgentLogs
+} from '../api/api';
 import StrategyForm from '../components/StrategyForm';
+import CampaignPlanList from '../components/CampaignPlanList';
 import API from '../api/api';
 import { AuthContext } from '../context/AuthContext';
 
@@ -21,9 +27,9 @@ export default function Dashboard() {
   const [content, setContent] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
-  const { user } = useContext(AuthContext);
   const [loadingType, setLoadingType] = useState(null); // 'campaign' | 'content' | null
 
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     if (!user?.userId || !user?.token) return;
@@ -33,7 +39,8 @@ export default function Dashboard() {
         const [strat, camp, cont] = await Promise.all([
           fetchStrategies(),
           fetchCampaigns(),
-          fetchContent()
+          fetchContent(),
+          fetchAgentLogs()
         ]);
 
         setStrategies(strat.data);
@@ -56,16 +63,13 @@ export default function Dashboard() {
         message: `${type === 'campaign' ? 'Campaign Agent' : 'Content Agent'} triggered successfully!`,
         severity: 'success'
       });
-    } catch {
-      setSnack({
-        open: true,
-        message: `Failed to run ${type} agent.`,
-        severity: 'error'
-      });
+    } catch (err) {
+      console.error(err);
+      setSnack({ open: true, message: 'Failed to trigger agent', severity: 'error' });
     } finally {
       setLoadingType(null);
     }
-  };  
+  };
 
   const StatBox = ({ label, count }) => (
     <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
@@ -103,8 +107,10 @@ export default function Dashboard() {
           {loadingType === 'content' ? <CircularProgress size={20} color="inherit" /> : '📝 Run Content Agent'}
         </Button>
       </Stack>
-
-
+      <Typography variant="h5" gutterBottom>
+        Campaign Plans
+      </Typography>
+      <CampaignPlanList campaigns={campaigns} />
 
       <StrategyForm open={formOpen} handleClose={() => setFormOpen(false)} userId={user?.userId} />
 

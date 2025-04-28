@@ -39,5 +39,69 @@ export const fetchContent = () => {
 export const fetchCampaignById = (id) => API.get(`/campaigns/${id}`);
 export const fetchAgentStats = () => API.get('/agents/stats');
 
+export const fetchAgentLogs = ({ page = 1, limit = 10, agentType = '' } = {}) => {
+    return API.get('/agents/logs', {
+      params: { page, limit, agentType }
+    });
+  };  
+
+export const createCampaignPlan = (data) => {
+    return API.post('/campaigns', data);
+  };  
+
+export const updateCampaignPlanStatus = (id, status) => {
+    return API.patch(`/campaigns/${id}/status`, { status });
+  };
+
+export const deleteCampaignPlan = (id) => {
+    return API.delete(`/campaigns/${id}`);
+  };
+
+export const updateCampaignPlan = (id, data) => {
+    return API.put(`/campaigns/${id}`, data); // ✅ API has baseURL set to localhost:5050
+  };
+  
+export const fetchContentAssets = async (filters = {}, token) => {
+    const params = new URLSearchParams(filters).toString();
+  
+    const res = await fetch(`/api/content?${params}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  
+    if (!res.ok) throw new Error('Failed to fetch content assets');
+  
+    return await res.json();
+  };
+  
+export const updateContent = (id, data) =>
+    fetch(`/api/content/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(data),
+    }).then(res => res.json());
+  
+export const regenerateContentAI = (data) =>
+    fetch(`/api/content/preview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(data),
+    }).then(res => res.json());
+
+export const deleteContent = (id) =>
+    fetch(`/api/content/${id}`, {
+        method: 'DELETE',
+        headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+    }).then(res => res.json());
+  
 export default API;
   
